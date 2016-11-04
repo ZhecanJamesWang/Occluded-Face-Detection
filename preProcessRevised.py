@@ -3,13 +3,15 @@ import cv2
 import os
 from PIL import Image, ImageChops
 import pickle
-
+from sklearn.cross_validation import train_test_split
 
 class preProcess(object):
     def __init__(self):
         self.name = "300W"
         self.rawDir = "./data/" +self.name + "/"
         self.resizedDir = "./data/" + self.name + "Resized/"        
+        self.pFileDir = "./data/pFile/"      
+        self.trainTestDir = "./data/trainTestData/"
 
         self.padding = 50
         self.format = ".jpg"
@@ -145,13 +147,43 @@ class preProcess(object):
         print type(y)
 
 
-        pickle.dump( x, open( self.name + "_x.p", "wb" ) )
-        pickle.dump( y, open( self.name + "_y.p", "wb" ) )
+        pickle.dump( x, open( self.pFileDir + self.name + "_x.p", "wb" ) )
+        pickle.dump( y, open( self.pFileDir + self.name + "_y.p", "wb" ) )
 
-    def splitData
+    def splitData(self):
+        files = os.listdir(self.pFileDir)
+        X = []
+        Y = []
+
+        for file in files:
+            if file != ".DS_Store":
+                if file[-3:-2] == "x":
+                    x = pickle.load( open( self.pFileDir + file, "rb" ) )
+                    print x.shape
+                    X.extend(x)
+                elif file[-3:-2] == "y":
+                    y = pickle.load( open( self.pFileDir + file, "rb" ) )
+                    print y.shape
+                    Y.extend(y)
+
+        X = np.asarray(X)
+        Y = np.asarray(Y)
+
+        print X.shape
+        print Y.shape
+
+        print type(X)
+        print type(Y)
+        xTrain, xTest, yTrain, yTest = train_test_split(X, Y, test_size=0.33, random_state=42)
+        pickle.dump( xTrain, open( self.trainTestDir + "xTrain.p", "wb" ) )
+        pickle.dump( xTest, open( self.trainTestDir + "xTest.p", "wb" ) )
+        pickle.dump( yTrain, open( self.trainTestDir + "yTrain.p", "wb" ) )
+        pickle.dump( yTrain, open( self.trainTestDir + "yTest.p", "wb" ) )
+
     def run(self):
         # self.readData()
-        self.generateData()
+        # self.generateData()
+        # self.splitData()
 
 
 if __name__ == '__main__':
