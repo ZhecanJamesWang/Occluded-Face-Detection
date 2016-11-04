@@ -29,7 +29,7 @@ for point in file:
     else:
         initDataCounter += 1
 
-padding = 40
+padding = 50
 Xmin = min(X) - padding
 Ymin = min(Y) - padding
 Xmax = max(X) + padding
@@ -49,7 +49,7 @@ cv2.rectangle(img,(Xmin, Ymin),(Xmax,Ymax),(0,255,0),3)
 cv2.imshow('image',img)
 
 cropImg = img[Ymin:Ymax, Xmin:Xmax] # Crop from (Xmin, Ymin),(Xmax,Ymax)
-resizedImage = cv2.resize(cropImg, (50, 50))
+resizedImage = cv2.resize(cropImg, (64, 64))
 
 cv2.imshow("resized", resizedImage)
 
