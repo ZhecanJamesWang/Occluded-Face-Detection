@@ -16,33 +16,38 @@ class preProcess(object):
         self.padding = 50
         self.format = ".jpg"
         self.size = (50, 50)
+        self.debug = True
 
-    def readData(self):
+    def getData(self):
+        # This function initialize reading image and landmark location data
+
         counter = 0
-        # folders = os.listdir(self.rawDir)
-        files = os.listdir(self.rawDir)
+        folders = os.listdir(self.rawDir)
+        # files = os.listdir(self.rawDir)
 
-        # for fold in folders:
-        #     if fold != ".DS_Store":
-        #         path = os.path.abspath(self.rawDir + fold)
-        #         files = os.listdir(path)
+        for fold in folders:
+            if fold != ".DS_Store":
+                path = os.path.abspath(self.rawDir + fold)
+                files = os.listdir(path)
 
-        for file in files:
-            if file != ".DS_Store" and self.format in file:
-                # img, pts= self.process(path + "/", file)
-                img, pts= self.process(self.rawDir + "/", file)
-                counter += 1
-                self.saveImag(self.resizedDir, file[:-4] + "_resized.png", img)
-                pickle.dump( pts, open( self.resizedDir + file[:-4] + ".p", "wb" ) )
+            for file in files:
+                if file != ".DS_Store" and self.format in file:
+                    # img, pts= self.process(path + "/", file)
+                    img, pts= self.extract(self.rawDir + "/", file)
+                    counter += 1
+                    self.saveImag(self.resizedDir, file[:-4] + "_resized.png", img)
+                    pickle.dump( pts, open( self.resizedDir + file[:-4] + ".p", "wb" ) )
 
-                if counter % 100 == 0:
-                    print counter
-                    # print path
+                    if counter % 100 == 0:
+                        print counter
+                        # print path
 
     def saveImag(self, dataDir, fileName, file):
+        # save image to directory
          cv2.imwrite(dataDir + fileName,file)
 
     def resize(self, image):
+        # resize imgage to determined size maintaing the original ratio
 
         image = Image.fromarray(np.uint8(image))
         image.thumbnail(self.size, Image.ANTIALIAS)
@@ -57,7 +62,9 @@ class preProcess(object):
         image = np.asarray(thumb)
         return image
 
-    def extractPTS(self, dataDir, ptsName, separate = True):
+    def parseLandmark(self, dataDir, ptsName, separate = True):
+        # parse and extract landmark location data from point files
+
         file = open(dataDir + ptsName, 'r')
         initDataCounter = 0
         if separate:
@@ -83,7 +90,10 @@ class preProcess(object):
             return X, Y
         else:
             return pts
-    def plotPTS(self, X, Y, ymax, xmax, img):
+
+    def plot(self, X, Y, ymax, xmax, img):
+        # plot landmarks on original image
+
         assert len(X) == len(Y)      
         for index in range(len(X)):
             print (int(X[index]*xmax), int(Y[index]*ymax))
@@ -93,31 +103,38 @@ class preProcess(object):
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
-    def process(self, dataDir, picName):
+
+    def extract(self, dataDir, picName):
+        # extract both image and landmark location data
+        # return image and its landmarks location data
+
         ptsName = picName[:-4] + ".pts"
         img = cv2.imread(dataDir + picName,1)
         (ymax, xmax, _) = img.shape
 
-        X, Y = self.extractPTS(dataDir, ptsName)
+        X, Y = self.parseLandmark(dataDir, ptsName)
   
         X = [x / float(xmax) for x in X]
         Y = [y / float(ymax) for y in Y]
 
         resizedImage = self.resize(img)
         (ymax, xmax, _) = resizedImage.shape
-
-        # self.plotPTS(X, Y, ymax, xmax, resizedImage)
         pts = X + Y
-        # resizedImage = cv2.resize(cropImg, (50, 50))
-        # cv2.rectangle(img,(Xmin, Ymin),(Xmax,Ymax),(0,255,0),3)
 
-        # cv2.imshow("cropped", cropImg)
-        # cv2.imshow('image',img)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
+        if self.debug:
+            self.plot(X, Y, ymax, xmax, resizedImage)
+            resizedImage = cv2.resize(cropImg, (50, 50))
+            cv2.rectangle(img,(Xmin, Ymin),(Xmax,Ymax),(0,255,0),3)
+
+            cv2.imshow("cropped", cropImg)
+            cv2.imshow('image',img)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+
         return resizedImage, pts
     
-    def generateData(self):
+    def collectData(self):
+        # collect and transfer data to store in pickle file
         x = []
         y = []
         Files = os.listdir(self.resizedDir)
@@ -151,6 +168,8 @@ class preProcess(object):
         pickle.dump( y, open( self.pFileDir + self.name + "_y.p", "wb" ) )
 
     def splitData(self):
+        # split data into train and test sets
+        
         files = os.listdir(self.pFileDir)
         X = []
         Y = []
@@ -188,8 +207,8 @@ class preProcess(object):
         # pickle.dump( yTest, open( self.trainTestDir + "yTest.p", "wb" ) )
 
     def run(self):
-        # self.readData()
-        # self.generateData()
+        self.getData()
+        self.collectData()
         self.splitData()
 
 

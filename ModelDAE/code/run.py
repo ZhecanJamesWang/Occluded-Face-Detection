@@ -35,7 +35,7 @@ def main():
   start()
 
   ae = autoencoder.main_unsupervised()
-  autoencoder.main_supervised(ae)
+  # autoencoder.main_supervised(ae)
 
 if __name__ == '__main__':
     main()
