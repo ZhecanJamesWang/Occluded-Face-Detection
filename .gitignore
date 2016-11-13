@@ -1,7 +1,5 @@
 
 # Compiled source #
 ###################
-./data/*
 *.png
 *.jpg
-*.p
