@@ -508,13 +508,7 @@ def main_supervised(ae):
       feed_dict = fill_feed_dict(data.test,
                                  input_pl,
                                  labels_placeholder)
-    # print ("data.test ", data.test._images.shape)
 
-    # feed_dict = fill_feed_dict(data.test,
-    #                    input_pl,
-    #                    labels_placeholder)
-
-    # print (type((sess.run(logits, feed_dict=feed_dict))))
       pred = sess.run(logits, feed_dict=feed_dict)
 
       print ("pred.shape ", pred.shape)
