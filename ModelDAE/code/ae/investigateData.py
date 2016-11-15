@@ -4,17 +4,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 dataDir = "../data/"
-# output = np.load(dataDir + "output.npy")
-# print output.shape
-# print output[0]
+output = np.load(dataDir + "output.npy")
+print output.shape
+print output[0]
 # x = output[0]
 # x_normed = x + np.amax(-x)
 # print(x_normed)
 
-testLabels = pickle.load( open( dataDir + "yTest.p", "rb" ) )[:1000]
-print testLabels.shape
-print type(testLabels[0][0])
-print testLabels[0]
+# testLabels = pickle.load( open( dataDir + "yTest.p", "rb" ) )[:1000]
+# testData = pickle.load( open( dataDir + "xTrain.p", "rb" ) )[:1000]
+
+# print testData[0].shape
 
 
 # plt.hist(output[0])

@@ -519,7 +519,7 @@ def main_supervised(ae):
 
 
     output = np.asarray(output)
-    np.save('data/output.npy', output)
+    np.save('data/output1.npy', output)
 
 
 if __name__ == '__main__':
