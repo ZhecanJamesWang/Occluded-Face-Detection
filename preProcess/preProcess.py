@@ -7,17 +7,17 @@ from sklearn.cross_validation import train_test_split
 
 class preProcess(object):
     def __init__(self):
-        self.name = "lfpw"
+        self.name = "300W"
         self.tag = "Preprocessed"
         self.rawDir = "./data/" +self.name + "/"
-        self.resizedDir = "./data/" + self.name + self.tag + "/"        
+        self.preProcessedDir = "./data/" + self.name + self.tag + "/"        
         self.pFileDir = "./data/pFile/"      
         self.trainTestDir = "./data/trainTestData/"
 
         self.padding = 50
         self.format = ".png"
         self.size = (50, 50)
-        self.debug = False
+        self.debug = True
 
     def getData(self):
         # This function initialize reading image and landmark location data
@@ -33,16 +33,20 @@ class preProcess(object):
 
                 for file in files:
                     if file != ".DS_Store" and self.format in file:
-                        img, pts= self.extract(path + "/", file)
-                        # img, pts= self.extract(self.rawDir + "/", file)
+                        resizedImage, normalizedImage, pts = self.extract(path + "/", file)
+                        # resizedImage, normalizedImage, pts = self.extract(self.rawDir + "/", file)
                         counter += 1
 
-                        # self.saveImag(self.resizedDir, file[:-4] + self.tag + ".png", img)
-                        # pickle.dump( pts, open( self.resizedDir + file[:-4] + ".p", "wb" ) )
+                        # pickle.dump( normalizedImage, open( self.preProcessedDir + file[:-4] + "Normalized" + ".p", "wb" ) )
+                        # pickle.dump( resizedImage, open( self.preProcessedDir + file[:-4] + "Resized" + ".p", "wb" ) )
+                        # pickle.dump( pts, open( self.preProcessedDir + file[:-4] + ".p", "wb" ) )
+
 
                         if counter % 100 == 0:
                             print counter
                             # print path
+
+
 
     def saveImag(self, dataDir, fileName, file):
         # save image to directory
@@ -126,13 +130,17 @@ class preProcess(object):
         X, Y = self.parseLandmark(dataDir, ptsName)
         croppedImage, X, Y = self.crop(img, X, Y) 
         
-        # self.plotLandmarks(croppedImage, X, Y, 0, 0)
+        if self.debug:
+            self.plotLandmarks(croppedImage, X, Y, 0, 0)
 
         resizedImage, X, Y = self.resize(croppedImage, X, Y)
 
-        # self.plotLandmarks(resizedImage, X, Y, 0, 0)
+        if self.debug:
+            self.plotLandmarks(resizedImage, X, Y, 0, 0)
 
-        normalizedImage = self.normalize(resizedImage)
+        grayImage = cv2.cvtColor(resizedImage, cv2.COLOR_BGR2GRAY)
+        
+        normalizedImage = self.normalize(grayImage)
        
 
         X = [x / float(self.size[0]) for x in X]
@@ -149,7 +157,7 @@ class preProcess(object):
             cv2.imshow('image',img)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
-        return normalizedImage, landmarks
+        return resizedImage, normalizedImage, landmarks
 
  
 
@@ -200,25 +208,33 @@ class preProcess(object):
         # collect and transfer data to store in pickle file
         x = []
         y = []
-        Files = os.listdir(self.resizedDir)
 
-        for i in range(len(Files)):
-            image = Files[i]
-            while image == ".DS_Store" or image[-2:] == ".p":
-                i += 1
-                image = Files[i]
+        Files = os.listdir(self.preProcessedDir)
+        limit = len(Files)
+        index = 0
+        while index < len(Files):
+            image = Files[index]
 
-            pts = image[:-12] + ".p"
-            img = cv2.imread(self.resizedDir + image, 0)
+            while image == ".DS_Store" or image[-12:] != "Normalized.p":
+                index += 1
+                if index >= limit:
+                    break
+                image = Files[index]
+                
+            if index >= limit:
+                break
 
-            img = img.reshape((self.size[0], self.size[1], 1))
 
-            pts = pickle.load( open( self.resizedDir + pts, "rb" ) )
+            if image[-12:] == "Normalized.p":
+                pts = image[:-12] + ".p"
+                img = pickle.load( open( self.preProcessedDir + image, "rb" ) )
+                img = img.reshape((self.size[0], self.size[1], 1))
+                pts = pickle.load( open( self.preProcessedDir + pts, "rb" ) )
 
-            x.append(img)
-            y.append(pts)
+                x.append(img)
+                y.append(pts)
             
-            i += 1
+            index += 1
 
         x = np.asarray(x)
         y = np.asarray(y)
@@ -235,7 +251,6 @@ class preProcess(object):
 
     def splitData(self):
         # split data into train and test sets
-        
         files = os.listdir(self.pFileDir)
         X = []
         Y = []
@@ -244,8 +259,8 @@ class preProcess(object):
             if file != ".DS_Store":
                 if file[-3:-2] == "x":
                     x = pickle.load( open( self.pFileDir + file, "rb" ) )
-                    # (num, d1, d2) = x.shape
-                    # x = x.reshape((num, d1 * d2))   
+                    (num, d1, d2, _) = x.shape
+                    x = x.reshape((num, d1 * d2))  
                     # x = x.reshape((num, d1, d2, 1)) 
                     X.extend(x)
                 elif file[-3:-2] == "y":
@@ -267,8 +282,8 @@ class preProcess(object):
         # np.save(self.trainTestDir + 'xTest.npy', xTest) 
         # np.save(self.trainTestDir + 'yTest.npy', yTest) 
 
-        pickle.dump( xTrain, open( self.trainTestDir + "xTrain.p", "wb" ) )
-        pickle.dump( xTest, open( self.trainTestDir + "xTest.p", "wb" ) )
+        pickle.dump( xTrain, open( self.trainTestDir + "xTrainFlatten.p", "wb" ) )
+        pickle.dump( xTest, open( self.trainTestDir + "xTestFlatten.p", "wb" ) )
         pickle.dump( yTrain, open( self.trainTestDir + "yTrain.p", "wb" ) )
         pickle.dump( yTest, open( self.trainTestDir + "yTest.p", "wb" ) )
 
