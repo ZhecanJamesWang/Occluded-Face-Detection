@@ -3,5 +3,8 @@
 ###################
 *.png
 *.jpg
+*.pts
 *.p
+*.npy
+./preProcessing/data/
 *.DS_Store
