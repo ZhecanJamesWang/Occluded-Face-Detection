@@ -1,10 +1,10 @@
 import numpy as np
 import cv2
 
-dataDir = "./data/300W/01_Indoor/"
+dataDir = "./data/ibug/"
 # Load an color image in grayscale
-picName = "indoor_049.png"
-ptsName = "indoor_049.pts"
+picName = "image_003_1.jpg"
+ptsName = "image_003_1.pts"
 
 
 img = cv2.imread(dataDir + picName,1)

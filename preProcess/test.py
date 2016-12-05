@@ -27,6 +27,11 @@
 # print i
 
 
-a = "123234"
+# a = "123234"
 
-print a[-2:]
+# print a[-2:]
+
+import os
+
+trainTestDir = "./data/trainTestData/"
+print os.path.isfile(trainTestDir + "firstAEDoutput2016-11-24 15:40:19.353189.p")

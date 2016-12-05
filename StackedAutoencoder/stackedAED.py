@@ -10,6 +10,8 @@ import scipy.io
 import scipy.optimize
 import pickle
 import math
+import datetime
+import os
 
 
 ###########################################################################################
@@ -91,12 +93,16 @@ class SparseAutoencoder(object):
         
         diff = output_layer - input
         
-        sum_of_squares_error = 0.5 * numpy.sum(numpy.multiply(diff, diff)) / input.shape[1]
-        weight_decay         = 0.5 * self.lamda * (numpy.sum(numpy.multiply(W1, W1)) +
+        sum_of_squares_error = numpy.sum(numpy.multiply(diff, diff)) / input.shape[1]
+
+        weight_decay         = self.lamda * (numpy.sum(numpy.multiply(W1, W1)) +
                                                    numpy.sum(numpy.multiply(W2, W2)))
+
         KL_divergence        = self.beta * numpy.sum(self.rho * numpy.log(self.rho / rho_cap) +
                                                     (1 - self.rho) * numpy.log((1 - self.rho) / (1 - rho_cap)))
-        cost                 = sum_of_squares_error + weight_decay + KL_divergence
+
+        cost                 = sum_of_squares_error + weight_decay 
+        # + KL_divergence
         
         KL_div_grad = self.beta * (-(self.rho / rho_cap) + ((1 - self.rho) / (1 - rho_cap)))
         
@@ -204,7 +210,7 @@ class SoftmaxRegression(object):
         """ Compute the weight decay term """
         
         theta_squared = numpy.multiply(theta, theta)
-        weight_decay  = 0.5 * self.lamda * numpy.sum(theta_squared)
+        weight_decay  = self.lamda * numpy.sum(theta_squared)
         
         """ Add both terms to get the cost """
         
@@ -365,7 +371,7 @@ def stackedAutoencoderCost(theta, net_config, lamda, data, labels):
     """ Compute the weight decay term """
     
     theta_squared = numpy.multiply(softmax_theta, softmax_theta)
-    weight_decay  = 0.5 * lamda * numpy.sum(theta_squared)
+    weight_decay  = lamda * numpy.sum(theta_squared)
     
     """ Add both terms to get the cost """
     
@@ -462,23 +468,18 @@ def executeStackedAutoencoder():
     hidden_size3   = 400    # size of hidden layer vector of second autoencoder
 
     rho            = 0.1    # desired average activation of hidden units
-    lamda          = 0.003  # weight decay parameter
+    lamda          = 0.001  # weight decay parameter
     beta           = 3      # weight of sparsity penalty term
-    max_iterations = 200    # number of optimization iterations
+    max_iterations = 600    # number of optimization iterations
     num_classes    = 136     # number of classes
     
     """ Load MNIST images for training and testing """
     
-    # train_data    = loadMNISTImages('train-images.idx3-ubyte')
-    # train_labels  = loadMNISTLabels('train-labels.idx1-ubyte')
 
-    # print train_data.shape
-    # print train_labels.shape
-    # print train_labels[:1000]
-
-# [:10]
-    train_data = pickle.load( open("./data/xTrainFlatten.p", "rb" ) )
-    train_labels = pickle.load( open("./data/yTrain.p", "rb" ) )
+    # train_data = pickle.load( open("./data/xTrainFlattenSpec.p", "rb" ) )[:30]
+    # train_labels = pickle.load( open("./data/yTrainSpec.p", "rb" ) )[:30]
+    train_data = pickle.load( open("./data/xTrainFlattenSpec.p", "rb" ) )
+    train_labels = pickle.load( open("./data/yTrainSpec.p", "rb" ) )
     (num, d) = train_data.shape
     train_data = train_data.reshape((d, num))
 
@@ -495,20 +496,24 @@ def executeStackedAutoencoder():
     opt_solution   = scipy.optimize.minimize(encoder1.sparseAutoencoderCost, encoder1.theta, 
                                              args = (train_data,), method = 'L-BFGS-B', 
                                              jac = True, options = {'maxiter': max_iterations, "disp": True})
-    
+
+    # , "disp": True
     sae1_opt_theta = opt_solution.x
     
     """ Get the features corresponding to first Autoencoder """
     
     sae1_features = feedForwardAutoencoder(sae1_opt_theta, hidden_size1, visible_size, train_data)
-    
+
+    print "######################################## finish the first AED ########################################"   
 
     # store the recovered face from first layer autoencoder
     output = getOutput(sae1_opt_theta, hidden_size1, visible_size, train_data)
     (num, d) = output.shape
     output = output.reshape((d, num))
-    pickle.dump( output, open( "./data/output/firstAEDoutput.p", "wb" ) )    
-    # 
+    if not os.path.isfile("./data/output/firstAEDoutput" + str(datetime.datetime.now()) + ".p"):
+        print "########################################   save the recovered photo ########################################"
+        pickle.dump( output, open( "./data/output/firstAEDoutput" + str(datetime.datetime.now()) + ".p", "wb" ) )  
+     # 
 
     """ Initialize the second Autoencoder with the above parameters """
     
@@ -518,12 +523,14 @@ def executeStackedAutoencoder():
     
     opt_solution   = scipy.optimize.minimize(encoder2.sparseAutoencoderCost, encoder2.theta, 
                                              args = (sae1_features,), method = 'L-BFGS-B', 
-                                             jac = True, options = {'maxiter': max_iterations})
+                                             jac = True, options = {'maxiter': max_iterations, "disp": True})
     sae2_opt_theta = opt_solution.x
     
     """ Get the features corresponding to second Autoencoder """
     
     sae2_features = feedForwardAutoencoder(sae2_opt_theta, hidden_size2, hidden_size1, sae1_features)
+
+    print "######################################## finish the second AED ########################################"   
     
 
     """ Initialize the third Autoencoder with the above parameters """
@@ -534,12 +541,14 @@ def executeStackedAutoencoder():
     
     opt_solution   = scipy.optimize.minimize(encoder3.sparseAutoencoderCost, encoder3.theta, 
                                              args = (sae2_features,), method = 'L-BFGS-B', 
-                                             jac = True, options = {'maxiter': max_iterations})
+                                             jac = True, options = {'maxiter': max_iterations, "disp": True})
     sae3_opt_theta = opt_solution.x
     
     """ Get the features corresponding to second Autoencoder """
     
     sae3_features = feedForwardAutoencoder(sae3_opt_theta, hidden_size3, hidden_size2, sae2_features)
+
+    print "######################################## finish the third AED ########################################"   
     
     """ Initialize Softmax Regressor with the above parameters """
     
@@ -549,7 +558,7 @@ def executeStackedAutoencoder():
     
     opt_solution      = scipy.optimize.minimize(regressor.softmaxCost, regressor.theta, 
                                                 args = (sae3_features, train_labels,), method = 'L-BFGS-B', 
-                                                jac = True, options = {'maxiter': max_iterations})
+                                                jac = True, options = {'maxiter': max_iterations, "disp": True})
     softmax_opt_theta = opt_solution.x
     
     """ Create a stack of the Stacked Autoencoder parameters """
@@ -575,14 +584,16 @@ def executeStackedAutoencoder():
     
     """ Load test images and labels """
 
-    test_data = pickle.load( open( "./data/xTestFlatten.p", "rb" ) )
-    test_labels = pickle.load( open( "./data/yTest.p", "rb" ) )
+
+    # test_data = pickle.load( open( "./data/xTestFlattenSpec.p", "rb" ) )[:1000]
+    # test_labels = pickle.load( open( "./data/yTestSpec.p", "rb" ) )[:1000]
+    test_data = pickle.load( open( "./data/xTestFlattenSpec.p", "rb" ) )
+    test_labels = pickle.load( open( "./data/yTestSpec.p", "rb" ) )
     (num, d) = test_data.shape
     test_data = test_data.reshape((d, num))
     
     print test_data.shape
     print test_labels.shape
-
 
 ########################################################################################
     """ Get predictions after greedy training """
@@ -593,15 +604,15 @@ def executeStackedAutoencoder():
     unSupervisedTestPred = stackedAutoencoderPredict(stacked_ae_theta, net_config, test_data)
     unSupervisedTestPred = numpy.transpose(unSupervisedTestPred)
 
-    pickle.dump( unSupervisedTrainPred, open( "./data/output/unSupervisedTrainPred.p", "wb" ) )    
-    pickle.dump( unSupervisedTestPred, open( "./data/output/unSupervisedTestPred.p", "wb" ) )
+    pickle.dump( unSupervisedTrainPred, open( "./data/output/unSupervisedTrainPred" + str(datetime.datetime.now()) + ".p", "wb" ) )    
+    pickle.dump( unSupervisedTestPred, open( "./data/output/unSupervisedTestPred" + str(datetime.datetime.now()) + ".p", "wb" ) )
     
     """ Print accuracy of the trained model """
     unSupervisedTrainAccuracy = getAcurracy(train_labels, unSupervisedTrainPred)
-    print """Train Data Accuracy after greedy training :""", numpy.mean(unSupervisedTrainAccuracy)
+    print """Train Data Accuracy after greedy training :""", unSupervisedTrainAccuracy
 
     unSupervisedTestAccuracy = getAcurracy(test_labels, unSupervisedTestPred)
-    print """Test Data Accuracy after greedy training :""", numpy.mean(unSupervisedTestAccuracy)
+    print """Test Data Accuracy after greedy training :""", unSupervisedTestAccuracy
 
 
 ########################################################################################    
@@ -609,7 +620,7 @@ def executeStackedAutoencoder():
     
     opt_solution = scipy.optimize.minimize(stackedAutoencoderCost, stacked_ae_theta, 
                                            args = (net_config, lamda, train_data, train_labels,),
-                                           method = 'L-BFGS-B', jac = True, options = {'maxiter': max_iterations})
+                                           method = 'L-BFGS-B', jac = True, options = {'maxiter': max_iterations, "disp": True})
     stacked_ae_opt_theta = opt_solution.x
     
     """ Get predictions after finetuning """
@@ -620,16 +631,16 @@ def executeStackedAutoencoder():
     supervisedTestPred = stackedAutoencoderPredict(stacked_ae_opt_theta, net_config, test_data)
     supervisedTestPred = numpy.transpose(supervisedTestPred)
     
-    pickle.dump( supervisedTrainPred, open( "./data/output/supervisedTrainPred.p", "wb" ) )    
-    pickle.dump( supervisedTestPred, open( "./data/output/supervisedTestPred.p", "wb" ) )
+    pickle.dump( supervisedTrainPred, open( "./data/output/supervisedTrainPred" + str(datetime.datetime.now()) + ".p", "wb" ) )    
+    pickle.dump( supervisedTestPred, open( "./data/output/supervisedTestPred" + str(datetime.datetime.now()) + ".p", "wb" ) )
     
 
     """ Print accuracy of the trained model """
     supervisedTrainAccuracy = getAcurracy(train_labels, supervisedTrainPred)
-    print """Train Data Accuracy after finetuning :""", numpy.mean(supervisedTrainAccuracy)
+    print """Train Data Accuracy after finetuning :""", supervisedTrainAccuracy
 
     supervisedTestAccuracy = getAcurracy(test_labels, supervisedTestPred)
-    print """Test Data Accuracy after finetuning :""", numpy.mean(supervisedTestAccuracy)
+    print """Test Data Accuracy after finetuning :""", supervisedTestAccuracy
  
 
 def getAcurracy(test_labels, predictions):
