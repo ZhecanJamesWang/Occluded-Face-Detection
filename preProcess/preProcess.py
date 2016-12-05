@@ -36,12 +36,8 @@ class preProcess(object):
                     if file != ".DS_Store" and self.format in file:
                         imgs, landmarks = self.extract(path + "/", file)
                         # resizedImage, normalizedImage, pts = self.extract(self.rawDir + "/", file)
+                        self.saveImag(self, imgs, landmarks, file)
                         counter += 1
-
-                        # pickle.dump( normalizedImage, open( self.preProcessedDir + file[:-4] + "Normalized" + ".p", "wb" ) )
-                        # pickle.dump( resizedImage, open( self.preProcessedDir + file[:-4] + "Resized" + ".p", "wb" ) )
-                        # pickle.dump( pts, open( self.preProcessedDir + file[:-4] + ".p", "wb" ) )
-
 
                         if counter % 100 == 0:
                             print counter
@@ -49,44 +45,17 @@ class preProcess(object):
 
 
 
-    def saveImag(self, dataDir, fileName, file):
+    def saveImag(self, imgs, landmarks, fileName):
         # save image to directory
-         cv2.imwrite(dataDir + fileName,file)
+         # cv2.imwrite(dataDir + fileName,file)
 
-    # def resize(self, image, X, Y):
-    #     # resize imgage to determined size maintaing the original ratio
-
-    #     (yMaxBound, xMaxBound, _) = image.shape
-
-    #     newX = [x/float(xMaxBound) for x in X]
-    #     newY = [y/float(yMaxBound) for y in Y]
-
-
-    #     image = Image.fromarray(np.uint8(image))
-    #     image.thumbnail(self.size, Image.ANTIALIAS)
-    #     image_size = image.size
-
-
-    #     (yMaxBound, xMaxBound) = image.size
-
-    #     newX = [x*float(xMaxBound) for x in newX]
-    #     newY = [y*float(yMaxBound) for y in newY]
-
-
-    #     thumb = image.crop( (0, 0, self.size[0], self.size[1]) )
-
-    #     image = np.asarray(thumb)
-
-
-    #     offset_x = max( (self.size[0] - image_size[0]) / 2, 0 )
-    #     offset_y = max( (self.size[1] - image_size[1]) / 2, 0 )
-
-    #     newX = [x + offset_x for x in newX]
-    #     newY = [y + offset_y for y in newY]
-
-    #     thumb = ImageChops.offset(thumb, offset_x, offset_y)
-
-    #     return image, newX, newY
+        for index in range(len(imgs)):
+            img = imgs[index]
+            landmark = landmarks[index]
+            pickle.dump( img, open( self.preProcessedDir + fileName[:-4] + "Normalized" + str(index) + ".p", "wb" ) )
+            pickle.dump( pts, open( self.preProcessedDir + fileName[:-4] + "Landmarks" + str(index) + ".p", "wb" ) )            
+            # pickle.dump( normalizedImage, open( self.preProcessedDir + file[:-4] + "Normalized" + ".p", "wb" ) )
+            # pickle.dump( resizedImage, open( self.preProcessedDir + file[:-4] + "Resized" + ".p", "wb" ) )
 
     def crop(self, img, X, Y):
         (yMaxBound, xMaxBound, _) = img.shape
@@ -312,6 +281,42 @@ class preProcess(object):
 
         pickle.dump( x, open( self.pFileDir + self.name + "_x.p", "wb" ) )
         pickle.dump( y, open( self.pFileDir + self.name + "_y.p", "wb" ) )
+
+
+    # def resize(self, image, X, Y):
+    #     # resize imgage to determined size maintaing the original ratio
+
+    #     (yMaxBound, xMaxBound, _) = image.shape
+
+    #     newX = [x/float(xMaxBound) for x in X]
+    #     newY = [y/float(yMaxBound) for y in Y]
+
+
+    #     image = Image.fromarray(np.uint8(image))
+    #     image.thumbnail(self.size, Image.ANTIALIAS)
+    #     image_size = image.size
+
+
+    #     (yMaxBound, xMaxBound) = image.size
+
+    #     newX = [x*float(xMaxBound) for x in newX]
+    #     newY = [y*float(yMaxBound) for y in newY]
+
+
+    #     thumb = image.crop( (0, 0, self.size[0], self.size[1]) )
+
+    #     image = np.asarray(thumb)
+
+
+    #     offset_x = max( (self.size[0] - image_size[0]) / 2, 0 )
+    #     offset_y = max( (self.size[1] - image_size[1]) / 2, 0 )
+
+    #     newX = [x + offset_x for x in newX]
+    #     newY = [y + offset_y for y in newY]
+
+    #     thumb = ImageChops.offset(thumb, offset_x, offset_y)
+
+    #     return image, newX, newY
 
     # def splitData(self):
     #     # split data into train and test sets
