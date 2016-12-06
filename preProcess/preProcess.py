@@ -7,23 +7,41 @@ from sklearn.cross_validation import train_test_split
 import utility as ut
 
 class preProcess(object):
-    def __init__(self):
-        self.name = "lfpw"
+    def __init__(self):       
         self.tag = "Preprocessed"
-        self.rawDir = "./data/" +self.name + "/"
-        self.preProcessedDir = "./data/" + self.name + self.tag + "/"        
         self.pFileDir = "./data/pFile/"      
         self.trainTestDir = "./data/trainTestData/"
 
         self.padding = 50
-        self.format = ".png"
         self.size = (50, 50)
         self.debug = True
+        self.derivativeNum = 3
+        self.dataDict = {
+        "afw": {"type": ".jpg", "method": "files"}, 
+        "helen": {"type": ".jpg", "method": "folders"}, 
+        "ibug": {"type": ".jpg", "method": "files"}, 
+        "lfpw": {"type": ".png", "method": "folders"}}
 
     def getData(self):
+
+        for key in self.dataDict:
+            data = dataDict[key]
+            print "getting data from: ", key
+            self.format = data["type"]
+            self.name = key
+            self.rawDir = "./data/" +self.name + "/"
+            self.preProcessedDir = "./data/" + self.name + self.tag + "/" 
+            if data["method"] == "folders":
+                self.getDataByFolders()
+            else:
+                self.getDataByFiles()
+
+
+    def getDataByFolders(self):
         # This function initialize reading image and landmark location data
 
-        counter = 0
+        preCounter, counter = 0, 0
+
         folders = os.listdir(self.rawDir)
         # files = os.listdir(self.rawDir)
 
@@ -36,24 +54,53 @@ class preProcess(object):
                     if file != ".DS_Store" and self.format in file:
                         imgs, landmarks = self.extract(path + "/", file)
                         # resizedImage, normalizedImage, pts = self.extract(self.rawDir + "/", file)
-                        self.saveImag(self, imgs, landmarks, file)
-                        counter += 1
+                        self.saveImg(imgs, landmarks, file)
+                        counter += self.derivativeNum * 4 + 2
 
-                        if counter % 100 == 0:
+                        if counter - preCounter > 100:
+                            preCounter = counter
                             print counter
                             # print path
 
+    def getDataByFiles(self):
+        counter = 0
+        # folders = os.listdir(self.rawDir)
+        files = os.listdir(self.rawDir)
+
+        # for fold in folders:
+        #     if fold != ".DS_Store":
+        #         path = os.path.abspath(self.rawDir + fold)
+        #         files = os.listdir(path)
+
+        for file in files:
+            if file != ".DS_Store" and self.format in file:
+                # imgs, landmarks = self.extract(path + "/", file)
+                imgs, landmarks = self.extract(self.rawDir + "/", file)                
+                self.saveImg(imgs, landmarks, file)
+                counter += 1
+
+                if counter % 100 == 0:
+                    print counter
+                    # print path
 
 
-    def saveImag(self, imgs, landmarks, fileName):
+
+    def saveImg(self, imgs, landmarks, fileName):
         # save image to directory
          # cv2.imwrite(dataDir + fileName,file)
 
         for index in range(len(imgs)):
             img = imgs[index]
             landmark = landmarks[index]
-            pickle.dump( img, open( self.preProcessedDir + fileName[:-4] + "Normalized" + str(index) + ".p", "wb" ) )
-            pickle.dump( pts, open( self.preProcessedDir + fileName[:-4] + "Landmarks" + str(index) + ".p", "wb" ) )            
+            if self.debug:
+                X, Y = ut.unpackLandmarks(landmark)
+                self.plotLandmarks(img, X, Y, "spec", ifRescale = True)
+                cv2.waitKey(1000)
+            else:
+                pickle.dump( img, open( self.preProcessedDir + fileName[:-4] + "Normalized" + str(index) + ".p", "wb" ) )
+                pickle.dump( landmark, open( self.preProcessedDir + fileName[:-4] + "Landmarks" + str(index) + ".p", "wb" ) )            
+            
+
             # pickle.dump( normalizedImage, open( self.preProcessedDir + file[:-4] + "Normalized" + ".p", "wb" ) )
             # pickle.dump( resizedImage, open( self.preProcessedDir + file[:-4] + "Resized" + ".p", "wb" ) )
 
@@ -96,7 +143,6 @@ class preProcess(object):
         Xs, Ys = [], []
 
         img = originalImg.copy()
-
         mirImage, newX, newY = ut.mirrorImage(img, X, Y)
         mirImage = mirImage.copy()
         imgs.append(mirImage)
@@ -106,39 +152,44 @@ class preProcess(object):
         if self.debug:
             self.plotLandmarks(mirImage, newX, newY, "mirror")
 
-        img = originalImg.copy()
-        scaleImage, newX, newY = ut.resize(img, X, Y, random = True)
-        imgs.append(mirImage)
-        Xs.append(newX)
-        Ys.append(newY)
+        for i in range(self.derivativeNum):
+            img = originalImg.copy()
+            scaleImage, newX, newY = ut.resize(img, X, Y, random = True)
+            imgs.append(scaleImage)
+            Xs.append(newX)
+            Ys.append(newY)
 
-        if self.debug:
-            self.plotLandmarks(scaleImage, newX, newY, "scale")
+            if self.debug:
+                self.plotLandmarks(scaleImage, newX, newY, "scale")
 
-        img = originalImg.copy()
-        rotateImage, newX, newY = ut.rotate(img, X, Y)
-        imgs.append(rotateImage)
-        Xs.append(newX)
-        Ys.append(newY)
+        for i in range(self.derivativeNum):
+            img = originalImg.copy()
+            rotateImage, newX, newY = ut.rotate(img, X, Y)
+            if rotateImage != None:
+                imgs.append(rotateImage)
+                Xs.append(newX)
+                Ys.append(newY)
+                if self.debug:
+                    self.plotLandmarks(rotateImage, newX, newY, "rotate")
 
-        if self.debug:
-            self.plotLandmarks(rotateImage, newX, newY, "rotate")
+        for i in range(self.derivativeNum):
+            img = originalImg.copy()
+            cbImage, newX, newY = ut.contrastBrightess(img, X, Y)
+            imgs.append(cbImage)
+            Xs.append(newX)
+            Ys.append(newY)
+            if self.debug: 
+                self.plotLandmarks(cbImage, newX, newY, "contrastBrightness")
 
-        img = originalImg.copy()
-        cbImage, newX, newY = ut.contrastBrightess(img, X, Y)
-        imgs.append(cbImage)
-        Xs.append(newX)
-        Ys.append(newY)
-        if self.debug: 
-            self.plotLandmarks(cbImage, newX, newY, "contrastBrightness")
-
-        img = originalImg.copy()
-        transImage, newX, newY = ut.translateImage(img, X, Y)
-        imgs.append(transImage)
-        Xs.append(newX)
-        Ys.append(newY)
-        if self.debug:  
-            self.plotLandmarks(transImage, newX, newY, "trans")
+        for i in range(self.derivativeNum):
+            img = originalImg.copy()
+            transImage, newX, newY = ut.translateImage(img, X, Y)
+            if transImage != None:
+                imgs.append(transImage)
+                Xs.append(newX)
+                Ys.append(newY)
+                if self.debug:  
+                    self.plotLandmarks(transImage, newX, newY, "trans")
 
         return imgs, Xs, Ys
 
@@ -184,9 +235,15 @@ class preProcess(object):
             filterImages.append(normalizedImage)
             landmarks.append(self.packLandmarks(x, y))
         filterImages, landmarks = np.asarray(filterImages), np.asarray(landmarks)
-        print filterImages.shape
-        print landmarks.shape
         return filterImages, landmarks
+
+    def unpackLandmarks(self, array):
+        x = []
+        y = []
+        for i in range(0, len(array), 2):
+            x.append(array[i])
+            y.append(array[i + 1])
+        return x, y
 
     def packLandmarks(self, X, Y):
         X = [x / float(self.size[0]) for x in X]
@@ -227,7 +284,7 @@ class preProcess(object):
         else:
             return pts
 
-    def plotLandmarks(self, img, X, Y, name, ymax = None, xmax = None, ifRescale =False):
+    def plotLandmarks(self, img, X, Y, name, ymax = 50, xmax = 50, ifRescale = False):
         # plot landmarks on original image
         assert len(X) == len(Y)      
         for index in range(len(X)):
@@ -239,84 +296,58 @@ class preProcess(object):
 
     def collectData(self):
         # collect and transfer data to store in pickle file
-        x = []
-        y = []
+        for key in self.dataDict:
+            print "getting data from: ", key
+            data = self.dataDict[key]            
+            self.format = data["type"]
+            self.name = key
+            self.preProcessedDir = "./data/" + self.name + self.tag + "/"
 
-        Files = os.listdir(self.preProcessedDir)
-        limit = len(Files)
-        index = 0
-        while index < len(Files):
-            image = Files[index]
+            x = []
+            y = []
 
-            while image == ".DS_Store" or image[-12:] != "Normalized.p":
-                index += 1
+            Files = os.listdir(self.preProcessedDir)
+            limit = len(Files)
+            index = 0
+            while index < len(Files):
+                file = Files[index]
+
+                while file == ".DS_Store" and "Normalized" not in file:
+                    index += 1
+                    if index >= limit:
+                        break
+                    file = Files[index]
+                
                 if index >= limit:
                     break
-                image = Files[index]
+                    
+                if "Normalized" in file:
+                    image = file
+                    position = image.index("Normalized")
+                    header = image[: position]
+                    ender = image[position + len("Normalized"):]
+                    landmark = header + "Landmarks" + ender
+
+
+                    img = pickle.load( open( self.preProcessedDir + image, "rb" ) )
+                    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!reshape problem!!!!!!!!!!
+                    # img = img.reshape((self.size[0], self.size[1], 1))
+                    landmark = pickle.load( open( self.preProcessedDir + landmark, "rb" ) )
+
+                    x.append(img)
+                    y.append(landmark)
                 
-            if index >= limit:
-                break
+                index += 1
 
+            x = np.asarray(x)
+            y = np.asarray(y)
 
-            if image[-12:] == "Normalized.p":
-                pts = image[:-12] + ".p"
-                img = pickle.load( open( self.preProcessedDir + image, "rb" ) )
-                img = img.reshape((self.size[0], self.size[1], 1))
-                pts = pickle.load( open( self.preProcessedDir + pts, "rb" ) )
+            print x.shape
+            print y.shape
 
-                x.append(img)
-                y.append(pts)
-            
-            index += 1
+            pickle.dump( x, open( self.pFileDir + self.name + "_x.p", "wb" ) )
+            pickle.dump( y, open( self.pFileDir + self.name + "_y.p", "wb" ) )
 
-        x = np.asarray(x)
-        y = np.asarray(y)
-
-        print x.shape
-        print y.shape
-
-        print type(x)
-        print type(y)
-
-
-        pickle.dump( x, open( self.pFileDir + self.name + "_x.p", "wb" ) )
-        pickle.dump( y, open( self.pFileDir + self.name + "_y.p", "wb" ) )
-
-
-    # def resize(self, image, X, Y):
-    #     # resize imgage to determined size maintaing the original ratio
-
-    #     (yMaxBound, xMaxBound, _) = image.shape
-
-    #     newX = [x/float(xMaxBound) for x in X]
-    #     newY = [y/float(yMaxBound) for y in Y]
-
-
-    #     image = Image.fromarray(np.uint8(image))
-    #     image.thumbnail(self.size, Image.ANTIALIAS)
-    #     image_size = image.size
-
-
-    #     (yMaxBound, xMaxBound) = image.size
-
-    #     newX = [x*float(xMaxBound) for x in newX]
-    #     newY = [y*float(yMaxBound) for y in newY]
-
-
-    #     thumb = image.crop( (0, 0, self.size[0], self.size[1]) )
-
-    #     image = np.asarray(thumb)
-
-
-    #     offset_x = max( (self.size[0] - image_size[0]) / 2, 0 )
-    #     offset_y = max( (self.size[1] - image_size[1]) / 2, 0 )
-
-    #     newX = [x + offset_x for x in newX]
-    #     newY = [y + offset_y for y in newY]
-
-    #     thumb = ImageChops.offset(thumb, offset_x, offset_y)
-
-    #     return image, newX, newY
 
     # def splitData(self):
     #     # split data into train and test sets
@@ -330,6 +361,7 @@ class preProcess(object):
     #                 print file
     #                 x = pickle.load( open( self.pFileDir + file, "rb" ) )
     #                 (num, d1, d2, _) = x.shape
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!reshape problem!!!!!!!!!!    
     #                 x = x.reshape((num, d1 * d2))  
     #                 # x = x.reshape((num, d1, d2, 1)) 
     #                 X.extend(x)
@@ -369,6 +401,7 @@ class preProcess(object):
     #                 print file
     #                 x = pickle.load( open( dir + file, "rb" ) )
     #                 (num, d1, d2, _) = x.shape
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!reshape problem!!!!!!!!!!    
     #                 x = x.reshape((num, d1 * d2))  
     #                 # x = x.reshape((num, d1, d2, 1)) 
     #                 X.extend(x)
@@ -391,8 +424,8 @@ class preProcess(object):
     #     pickle.dump( Y, open( self.trainTestDir + "y" + tag + "Spec" + ".p", "wb" ) )
 
     def run(self):
-        self.getData()
-        # self.collectData()
+        # self.getData()
+        self.collectData()
         # self.splitData()
         # self.combineData(self.pFileDir + "test/", "Test")
 

@@ -13,7 +13,9 @@ def mirrorImage(image, X, Y):
     return image, X.astype(int), Y.astype(int)
 
 
-def rotate(image, X, Y):
+def rotate(image, X, Y, counter = 0):
+    if counter > 2:
+        return None, None, None
     originalImage = image.copy()
     (h, w, _) = image.shape
     degree = np.random.uniform(-45, 45)
@@ -29,7 +31,7 @@ def rotate(image, X, Y):
     image = cv2.warpAffine(image,M,(w, h))
 
     if np.min(newX) < 0 or np.min(newY) < 0 or np.max(newX) > w or np.max(newY) > h:
-        image, newX, newY = rotate(originalImage, X, Y) 
+        image, newX, newY = rotate(originalImage, X, Y, counter + 1) 
 
     newX = np.asarray(newX)
     newY = np.asarray(newY)
@@ -57,20 +59,20 @@ def contrastBrightess(image, X, Y):
     return image, X, Y
 
 
-def plotLandmarks(img, X, Y, name):
+def plotLandmarks(img, X, Y, name, ymax = 50, xmax = 50, ifRescale = False):
     # plot landmarks on original image
-    print len(X)
     assert len(X) == len(Y)      
     for index in range(len(X)):
-        cv2.circle(img,(int(X[index]), int(Y[index])), 2, (0,0,255), -1)
+        if ifRescale:
+            cv2.circle(img,(int(X[index]*xmax), int(Y[index]*ymax)), 1, (0,0,255), -1)
+        else:
+            cv2.circle(img,(int(X[index]), int(Y[index])), 2, (0,0,255), -1)
     cv2.imshow(name,img)
-
 
 def resize(image, X, Y, random = False, size = (200, 200)):
     originalImage = image
     # resize imgage to determined size maintaing the original ratio
     (yMaxBound, xMaxBound, _) = image.shape
-    print (yMaxBound, xMaxBound)
 
     newX = [x/float(xMaxBound) for x in X]
     newY = [y/float(yMaxBound) for y in Y]
@@ -84,7 +86,6 @@ def resize(image, X, Y, random = False, size = (200, 200)):
     image.thumbnail(size, Image.ANTIALIAS)
     image_size = image.size
 
-    print image_size
     (newXMaxBound, newYMaxBound) = image.size
 
     newX = [x*float(newXMaxBound) for x in newX]
@@ -123,7 +124,9 @@ def resize(image, X, Y, random = False, size = (200, 200)):
 
     return image, newX.astype(int), newY.astype(int)
 
-def translateImage(image, X, Y):
+def translateImage(image, X, Y, counter = 0):
+    if counter > 2:
+        return None, None, None
     originalImage = image.copy()
     (h, w, _) = image.shape
     xTransRange, yTransRange = np.random.randint(0, w/5), np.random.randint(0, h/5)
@@ -137,11 +140,19 @@ def translateImage(image, X, Y):
     image = newImg
 
     if np.min(newX) < 0 or np.min(newY) < 0 or np.max(newX) > w or np.max(newY) > h:
-        image, newX, newY = translateImage(originalImage, X, Y) 
+        image, newX, newY = translateImage(originalImage, X, Y, counter + 1) 
 
     newX = np.asarray(newX)
     newY = np.asarray(newY)
     return image, newX, newY
+
+def unpackLandmarks(array):
+    x = []
+    y = []
+    for i in range(0, len(array), 2):
+        x.append(array[i])
+        y.append(array[i + 1])
+    return x, y
 
 def test():
     dataDir = "./data/ibug/"
