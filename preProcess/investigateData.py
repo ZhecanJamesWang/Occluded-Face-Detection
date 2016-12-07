@@ -19,7 +19,7 @@ class InvestigateData(object):
         # print self.suPred.shape
         # print self.unsPred.shape
         # print self.output.shape
-        
+
         self.specPic = pickle.load( open( "296814969_2Normalized12.p", "rb" ) )
         self.specPicLandmarks = pickle.load( open( "296814969_2Landmarks12.p", "rb" ) )
 
@@ -43,6 +43,7 @@ class InvestigateData(object):
             cv2.waitKey(0)
 
     def checkSpecPic(self):       
+        print self.specPic.shape
         X, Y = ut.unpackLandmarks(self.specPicLandmarks)
         print X
         print Y

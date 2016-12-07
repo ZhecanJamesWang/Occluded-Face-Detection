@@ -14,8 +14,9 @@ class preProcess(object):
 
         self.padding = 50
         self.size = (50, 50)
-        self.debug = True
+        self.debug = False
         self.derivativeNum = 3
+        self.firstSave = True
         self.dataDict = {
         "afw": {"type": ".jpg", "method": "files"}, 
         "helen": {"type": ".jpg", "method": "folders"}, 
@@ -25,7 +26,7 @@ class preProcess(object):
     def getData(self):
 
         for key in self.dataDict:
-            data = dataDict[key]
+            data = self.dataDict[key]
             print "getting data from: ", key
             self.format = data["type"]
             self.name = key
@@ -320,7 +321,7 @@ class preProcess(object):
                 
                 if index >= limit:
                     break
-                    
+
                 if "Normalized" in file:
                     image = file
                     position = image.index("Normalized")
@@ -328,11 +329,14 @@ class preProcess(object):
                     ender = image[position + len("Normalized"):]
                     landmark = header + "Landmarks" + ender
 
-
                     img = pickle.load( open( self.preProcessedDir + image, "rb" ) )
-                    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!reshape problem!!!!!!!!!!
+# !!!!!
                     # img = img.reshape((self.size[0], self.size[1], 1))
-                    landmark = pickle.load( open( self.preProcessedDir + landmark, "rb" ) )
+                    if self.debug:
+                        landmark = pickle.load( open( self.preProcessedDir + landmark, "rb" ) )
+                        X, Y = ut.unpackLandmarks(landmark)
+                        self.plotLandmarks(img, X, Y, "spec", ifRescale = True)
+                        cv2.waitKey(1000)                    
 
                     x.append(img)
                     y.append(landmark)
@@ -345,89 +349,102 @@ class preProcess(object):
             print x.shape
             print y.shape
 
-            pickle.dump( x, open( self.pFileDir + self.name + "_x.p", "wb" ) )
-            pickle.dump( y, open( self.pFileDir + self.name + "_y.p", "wb" ) )
+            if self.firstSave:
+                self.now = datetime.datetime.now().isoformat()
+                self.firstSave = False
 
+            pickle.dump( x, open( self.pFileDir + self.name + self.now + "_x.p", "wb" ) )
+            pickle.dump( y, open( self.pFileDir + self.name + self.now + "_y.p", "wb" ) )
 
-    # def splitData(self):
-    #     # split data into train and test sets
-    #     files = os.listdir(self.pFileDir)
-    #     X = []
-    #     Y = []
+        self.firstSave = True
 
-    #     for file in files:
-    #         if file != ".DS_Store":
-    #             if file[-3:-2] == "x":
-    #                 print file
-    #                 x = pickle.load( open( self.pFileDir + file, "rb" ) )
-    #                 (num, d1, d2, _) = x.shape
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!reshape problem!!!!!!!!!!    
-    #                 x = x.reshape((num, d1 * d2))  
-    #                 # x = x.reshape((num, d1, d2, 1)) 
-    #                 X.extend(x)
-    #             elif file[-3:-2] == "y":
-    #                 print file
-    #                 y = pickle.load( open( self.pFileDir + file, "rb" ) )
-    #                 Y.extend(y)
+    def splitData(self):
+        # split data into train and test sets
+        files = os.listdir(self.pFileDir)
+        X = []
+        Y = []
 
-    #     X = np.asarray(X)
-    #     Y = np.asarray(Y)
+        for file in files:
+            if file != ".DS_Store":
+                if file[-3:-2] == "x":
+                    print file
+                    x = pickle.load( open( self.pFileDir + file, "rb" ) )
+                    (num, d1, d2, _) = x.shape
+# !!!!!   
+                    x = x.reshape((num, d1 * d2))  
+                    # x = x.reshape((num, d1, d2, 1)) 
+                    X.extend(x)
+                elif file[-3:-2] == "y":
+                    print file
+                    y = pickle.load( open( self.pFileDir + file, "rb" ) )
+                    Y.extend(y)
 
-    #     print X.shape
-    #     print Y.shape
+        X = np.asarray(X)
+        Y = np.asarray(Y)
 
-    #     print type(X)
-    #     print type(Y)
-    #     xTrain, xTest, yTrain, yTest = train_test_split(X, Y, test_size=0.33, random_state=42)
+        print X.shape
+        print Y.shape
 
-    #     # np.save(self.trainTestDir + 'xTrain.npy', xTrain) 
-    #     # np.save(self.trainTestDir + 'yTrain.npy', yTrain) 
-    #     # np.save(self.trainTestDir + 'xTest.npy', xTest) 
-    #     # np.save(self.trainTestDir + 'yTest.npy', yTest) 
+        print type(X)
+        print type(Y)
+        xTrain, xTest, yTrain, yTest = train_test_split(X, Y, test_size=0.33, random_state=42)
 
-    #     pickle.dump( xTrain, open( self.trainTestDir + "xTrainFlatten.p", "wb" ) )
-    #     pickle.dump( xTest, open( self.trainTestDir + "xTestFlatten.p", "wb" ) )
-    #     pickle.dump( yTrain, open( self.trainTestDir + "yTrain.p", "wb" ) )
-    #     pickle.dump( yTest, open( self.trainTestDir + "yTest.p", "wb" ) )
+        self.now = datetime.datetime.now().isoformat()
+        pickle.dump( xTrain, open( self.trainTestDir + self.now + "xTrainFlatten.p", "wb" ) )
+        pickle.dump( xTest, open( self.trainTestDir + self.now + "xTestFlatten.p", "wb" ) )
+        pickle.dump( yTrain, open( self.trainTestDir + self.now + "yTrain.p", "wb" ) )
+        pickle.dump( yTest, open( self.trainTestDir + self.now + "yTest.p", "wb" ) )
 
-    # def combineData(self, dir, tag):
-    #     files = os.listdir(dir)
-    #     X = []
-    #     Y = []
+    def combineData(self):
+        dirs = [self.pFileDir + "test/", self.pFileDir + "train/"] 
+        tags = ["Test", "Train"]
 
-    #     for file in files:
-    #         if file != ".DS_Store":
-    #             if file[-3:-2] == "x":
-    #                 print file
-    #                 x = pickle.load( open( dir + file, "rb" ) )
-    #                 (num, d1, d2, _) = x.shape
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!reshape problem!!!!!!!!!!    
-    #                 x = x.reshape((num, d1 * d2))  
-    #                 # x = x.reshape((num, d1, d2, 1)) 
-    #                 X.extend(x)
-    #             elif file[-3:-2] == "y":
-    #                 print file
-    #                 y = pickle.load( open( dir + file, "rb" ) )
-    #                 Y.extend(y)
+        for index in range(len(dirs)):
+            dr = dirs[index]
+            tag = tags[index]
 
-    #     X = np.asarray(X)
-    #     Y = np.asarray(Y)
+            files = os.listdir(dr)
+            X = []
+            Y = []
 
-    #     print X.shape
-    #     print Y.shape
+            for file in files:
+                if file != ".DS_Store":
+                    if file[-3:-2] == "x":
+                        print file
+                        x = pickle.load( open( dir + file, "rb" ) )
+                        (num, d1, d2, _) = x.shape
+# !!!!! 
+                        x = x.reshape((num, d1 * d2))  
+                        # x = x.reshape((num, d1, d2, 1)) 
+                        X.extend(x)
+                    elif file[-3:-2] == "y":
+                        print file
+                        y = pickle.load( open( dir + file, "rb" ) )
+                        Y.extend(y)
 
-    #     print type(X)
-    #     print type(Y)
+            X = np.asarray(X)
+            Y = np.asarray(Y)
 
+            print X.shape
+            print Y.shape
+            print type(X)
+            print type(Y)
 
-    #     pickle.dump( X, open( self.trainTestDir + "x" + tag + "FlattenSpec" + ".p", "wb" ) )
-    #     pickle.dump( Y, open( self.trainTestDir + "y" + tag + "Spec" + ".p", "wb" ) )
+            if self.firstSave:
+                self.now = datetime.datetime.now().isoformat()
+                self.firstSave = False
+
+            pickle.dump( X, open( self.trainTestDir + self.now + "x" + tag + "FlattenSpec" + ".p", "wb" ) )
+            pickle.dump( Y, open( self.trainTestDir + self.now  + "y" + tag + "Spec" + ".p", "wb" ) )
+            
+        self.firstSave = True
+
 
     def run(self):
-        # self.getData()
+        self.getData()
         self.collectData()
         # self.splitData()
-        # self.combineData(self.pFileDir + "test/", "Test")
+        self.combineData()
 
 
 
