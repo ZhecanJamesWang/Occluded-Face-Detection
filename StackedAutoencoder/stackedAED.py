@@ -478,12 +478,12 @@ def executeStackedAutoencoder():
 
     # train_data = pickle.load( open("./data/2016-12-07T16:07:01.675948xTrainFlattenSpec.p", "rb" ) )[:1000]
     # train_labels = pickle.load( open("./data/2016-12-07T16:07:01.675948yTrainSpec.p", "rb" ) )
-    train_data = pickle.load( open("./data/2016-12-07T16:07:01.675948xTrainFlattenSpec.p", "rb" ) )[:20000]
-    train_labels = pickle.load( open("./data/2016-12-07T16:07:01.675948yTrainSpec.p", "rb" ) )[:20000]
+    train_data = pickle.load( open("./data/currentTrainTestData/2016-12-07T16:07:01.675948xTrainFlattenSpec.p", "rb" ) )[:20000]
+    train_labels = pickle.load( open("./data/currentTrainTestData/2016-12-07T16:07:01.675948yTrainSpec.p", "rb" ) )[:20000]
     print "train_data.shape: ", train_data.shape
     print "train_labels.shape: ", train_labels.shape
 
-    train_data = np.transpose(train_data)
+    train_data = numpy.transpose(train_data)
 
     print "After transposing: train_data.shape ", train_data.shape
 
@@ -588,13 +588,13 @@ def executeStackedAutoencoder():
 
     # test_data = pickle.load( open( "./data/xTestFlattenSpec.p", "rb" ) )[:1000]
     # test_labels = pickle.load( open( "./data/yTestSpec.p", "rb" ) )[:1000]
-    test_data = pickle.load( open( "./data/2016-12-07T16:07:01.675948xTestFlattenSpec.p", "rb" ) )
-    test_labels = pickle.load( open( "./data/2016-12-07T16:07:01.675948yTestSpec.p", "rb" ) )
+    test_data = pickle.load( open( "./data/currentTrainTestData/2016-12-07T16:07:01.675948xTestFlattenSpec.p", "rb" ) )
+    test_labels = pickle.load( open( "./data/currentTrainTestData/2016-12-07T16:07:01.675948yTestSpec.p", "rb" ) )
     
     print "test_data.shape: ", test_data.shape
     print "train_labels.shape: ", test_labels.shape
 
-    test_data = np.transpose(test_data)
+    test_data = numpy.transpose(test_data)
 
     print "After transposing: test_data.shape ", test_data.shape
 ########################################################################################
