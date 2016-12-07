@@ -5,6 +5,7 @@ from PIL import Image, ImageChops
 import pickle
 from sklearn.cross_validation import train_test_split
 import utility as ut
+import datetime
 
 class preProcess(object):
     def __init__(self):       
@@ -330,8 +331,7 @@ class preProcess(object):
                     landmark = header + "Landmarks" + ender
 
                     img = pickle.load( open( self.preProcessedDir + image, "rb" ) )
-# !!!!!
-                    # img = img.reshape((self.size[0], self.size[1], 1))
+                    
                     if self.debug:
                         landmark = pickle.load( open( self.preProcessedDir + landmark, "rb" ) )
                         X, Y = ut.unpackLandmarks(landmark)
@@ -369,10 +369,8 @@ class preProcess(object):
                 if file[-3:-2] == "x":
                     print file
                     x = pickle.load( open( self.pFileDir + file, "rb" ) )
-                    (num, d1, d2, _) = x.shape
-# !!!!!   
+                    (num, d1, d2) = x.shape
                     x = x.reshape((num, d1 * d2))  
-                    # x = x.reshape((num, d1, d2, 1)) 
                     X.extend(x)
                 elif file[-3:-2] == "y":
                     print file
@@ -411,15 +409,14 @@ class preProcess(object):
                 if file != ".DS_Store":
                     if file[-3:-2] == "x":
                         print file
-                        x = pickle.load( open( dir + file, "rb" ) )
-                        (num, d1, d2, _) = x.shape
+                        x = pickle.load( open( dr + file, "rb" ) )
+                        (num, d1, d2) = x.shape
 # !!!!! 
                         x = x.reshape((num, d1 * d2))  
-                        # x = x.reshape((num, d1, d2, 1)) 
                         X.extend(x)
                     elif file[-3:-2] == "y":
                         print file
-                        y = pickle.load( open( dir + file, "rb" ) )
+                        y = pickle.load( open( dr + file, "rb" ) )
                         Y.extend(y)
 
             X = np.asarray(X)
@@ -441,8 +438,8 @@ class preProcess(object):
 
 
     def run(self):
-        self.getData()
-        self.collectData()
+        # self.getData()
+        # self.collectData()
         # self.splitData()
         self.combineData()
 
