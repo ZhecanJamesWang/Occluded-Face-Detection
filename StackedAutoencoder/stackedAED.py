@@ -466,20 +466,25 @@ def executeStackedAutoencoder():
     hidden_size1   = 1600    # size of hidden layer vector of first autoencoder
     hidden_size2   = 900    # size of hidden layer vector of second autoencoder
     hidden_size3   = 400    # size of hidden layer vector of second autoencoder
+    # hidden_size1   = 100    # size of hidden layer vector of first autoencoder
+    # hidden_size2   = 50    # size of hidden layer vector of second autoencoder
+    # hidden_size3   = 20    # size of hidden layer vector of second autoencoder
 
     rho            = 0.1    # desired average activation of hidden units
     lamda          = 0.001  # weight decay parameter
     beta           = 3      # weight of sparsity penalty term
     max_iterations = 600    # number of optimization iterations
+    # max_iterations = 10    # number of optimization iterations
     num_classes    = 136     # number of classes
     
-    """ Load MNIST images for training and testing """
+    """ Load data for training and testing """
     
 
-    # train_data = pickle.load( open("./data/2016-12-07T16:07:01.675948xTrainFlattenSpec.p", "rb" ) )[:1000]
-    # train_labels = pickle.load( open("./data/2016-12-07T16:07:01.675948yTrainSpec.p", "rb" ) )
-    train_data = pickle.load( open("./data/currentTrainTestData/2016-12-07T16:07:01.675948xTrainFlattenSpec.p", "rb" ) )[:20000]
-    train_labels = pickle.load( open("./data/currentTrainTestData/2016-12-07T16:07:01.675948yTrainSpec.p", "rb" ) )[:20000]
+    train_data = pickle.load( open("./data/currentTrainTestData/2016-12-07T21:25:34.871445xTrainFlattenSpec.p", "rb" ) )
+    train_labels = pickle.load( open("./data/currentTrainTestData/2016-12-07T21:25:34.871445yTrainSpec.p", "rb" ) )
+
+    # train_data = pickle.load( open("./data/currentTrainTestData/xTrainFlattenSpec.p", "rb" ) )[:10]
+    # train_labels = pickle.load( open("./data/currentTrainTestData/yTrainSpec.p", "rb" ) )[:10]
     print "train_data.shape: ", train_data.shape
     print "train_labels.shape: ", train_labels.shape
 
@@ -586,10 +591,10 @@ def executeStackedAutoencoder():
     """ Load test images and labels """
 
 
-    # test_data = pickle.load( open( "./data/xTestFlattenSpec.p", "rb" ) )[:1000]
-    # test_labels = pickle.load( open( "./data/yTestSpec.p", "rb" ) )[:1000]
-    test_data = pickle.load( open( "./data/currentTrainTestData/2016-12-07T16:07:01.675948xTestFlattenSpec.p", "rb" ) )
-    test_labels = pickle.load( open( "./data/currentTrainTestData/2016-12-07T16:07:01.675948yTestSpec.p", "rb" ) )
+    test_data = pickle.load( open( "./data/currentTrainTestData/2016-12-07T21:25:34.871445xTestFlattenSpec.p", "rb" ) )
+    test_labels = pickle.load( open( "./data/currentTrainTestData/2016-12-07T21:25:34.871445yTestSpec.p", "rb" ) )
+    # test_data = pickle.load( open( "./data/currentTrainTestData/xTestFlattenSpec.p", "rb" ) )[:10]
+    # test_labels = pickle.load( open( "./data/currentTrainTestData/yTestSpec.p", "rb" ) )[:10]
     
     print "test_data.shape: ", test_data.shape
     print "train_labels.shape: ", test_labels.shape
@@ -610,11 +615,11 @@ def executeStackedAutoencoder():
     pickle.dump( unSupervisedTestPred, open( "./data/output/unSupervisedTestPred" + str(datetime.datetime.now()) + ".p", "wb" ) )
     
     """ Print accuracy of the trained model """
-    unSupervisedTrainAccuracy = getAcurracy(train_labels, unSupervisedTrainPred)
-    print """Train Data Accuracy after greedy training :""", unSupervisedTrainAccuracy
+    unSupervisedTrainAccuracy = getError(train_labels, unSupervisedTrainPred)
+    print """Train interocular distance after greedy training :""", unSupervisedTrainAccuracy
 
-    unSupervisedTestAccuracy = getAcurracy(test_labels, unSupervisedTestPred)
-    print """Test Data Accuracy after greedy training :""", unSupervisedTestAccuracy
+    unSupervisedTestAccuracy = getError(test_labels, unSupervisedTestPred)
+    print """Test interocular distance after greedy training :""", unSupervisedTestAccuracy
 
 
 ########################################################################################    
@@ -638,14 +643,14 @@ def executeStackedAutoencoder():
     
 
     """ Print accuracy of the trained model """
-    supervisedTrainAccuracy = getAcurracy(train_labels, supervisedTrainPred)
-    print """Train Data Accuracy after finetuning :""", supervisedTrainAccuracy
+    supervisedTrainAccuracy = getError(train_labels, supervisedTrainPred)
+    print """Train interocular distance after finetuning :""", supervisedTrainAccuracy
 
-    supervisedTestAccuracy = getAcurracy(test_labels, supervisedTestPred)
-    print """Test Data Accuracy after finetuning :""", supervisedTestAccuracy
+    supervisedTestAccuracy = getError(test_labels, supervisedTestPred)
+    print """Test interocular distance after finetuning :""", supervisedTestAccuracy
  
 
-def getAcurracy(test_labels, predictions):
+def getError(test_labels, predictions):
     newPredictions = []
     newLabels = []
     error = []

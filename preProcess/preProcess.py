@@ -331,9 +331,9 @@ class preProcess(object):
                     landmark = header + "Landmarks" + ender
 
                     img = pickle.load( open( self.preProcessedDir + image, "rb" ) )
+                    landmark = pickle.load( open( self.preProcessedDir + landmark, "rb" ) )
                     
                     if self.debug:
-                        landmark = pickle.load( open( self.preProcessedDir + landmark, "rb" ) )
                         X, Y = ut.unpackLandmarks(landmark)
                         self.plotLandmarks(img, X, Y, "spec", ifRescale = True)
                         cv2.waitKey(1000)                    
@@ -346,8 +346,10 @@ class preProcess(object):
             x = np.asarray(x)
             y = np.asarray(y)
 
-            print x.shape
-            print y.shape
+            print "x.shape ", x.shape
+            print "y.shape ", y.shape
+            print "y[0].shape ", y[0].shape
+
 
             if self.firstSave:
                 self.now = datetime.datetime.now().isoformat()

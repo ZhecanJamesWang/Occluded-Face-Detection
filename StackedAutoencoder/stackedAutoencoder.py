@@ -512,13 +512,15 @@ def executeStackedAutoencoder():
     
     """ Load MNIST images for training and testing """
     
-    train_data    = loadMNISTImages('train-images.idx3-ubyte')
-    train_labels  = loadMNISTLabels('train-labels.idx1-ubyte')[:1000]
-    (num, d) = train_data.shape
-    train_data = train_data.reshape((d, num))
-    train_data = train_data[:1000]
-    (num, d) = train_data.shape
-    train_data = train_data.reshape((d, num))    
+    train_data    = loadMNISTImages('./data/mnistData/train-images-idx3-ubyte')[:10]
+    train_labels  = loadMNISTLabels('./data/mnistData/train-labels-idx1-ubyte')[:10]
+    print train_data.shape
+    # (num, d) = train_data.shape
+    # train_data = train_data.reshape((d, num))
+    
+    # train_data = train_data[:1000]
+    # (num, d) = train_data.shape
+    # train_data = train_data.reshape((d, num))    
 
 # ##################################
     # print type(train_data)
@@ -590,8 +592,8 @@ def executeStackedAutoencoder():
     
     """ Load MNIST test images and labels """
     
-    test_data   = loadMNISTImages('t10k-images.idx3-ubyte') 
-    test_labels = loadMNISTLabels('t10k-labels.idx1-ubyte')
+    test_data   = loadMNISTImages('./data/mnistData/t10k-images-idx3-ubyte')[:10] 
+    test_labels = loadMNISTLabels('./data/mnistData/t10k-labels-idx1-ubyte')[:10]
     
 
     """ Get predictions after greedy training """
