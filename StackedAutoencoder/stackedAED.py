@@ -476,12 +476,13 @@ def executeStackedAutoencoder():
     max_iterations = 600    # number of optimization iterations
     # max_iterations = 10    # number of optimization iterations
     num_classes    = 136     # number of classes
-    
+    now = str(datetime.datetime.now())
+
     """ Load data for training and testing """
     
 
-    train_data = pickle.load( open("./data/currentTrainTestData/2016-12-07T21:25:34.871445xTrainFlattenSpec.p", "rb" ) )
-    train_labels = pickle.load( open("./data/currentTrainTestData/2016-12-07T21:25:34.871445yTrainSpec.p", "rb" ) )
+    train_data = pickle.load( open("./data/currentTrainTestData/2016-12-07T21:25:34.871445xTrainFlattenSpec.p", "rb" ) )[:10]
+    train_labels = pickle.load( open("./data/currentTrainTestData/2016-12-07T21:25:34.871445yTrainSpec.p", "rb" ) )[:10]
 
     # train_data = pickle.load( open("./data/currentTrainTestData/xTrainFlattenSpec.p", "rb" ) )[:10]
     # train_labels = pickle.load( open("./data/currentTrainTestData/yTrainSpec.p", "rb" ) )[:10]
@@ -491,6 +492,21 @@ def executeStackedAutoencoder():
     train_data = numpy.transpose(train_data)
 
     print "After transposing: train_data.shape ", train_data.shape
+
+    """ Load test images and labels """
+
+
+    test_data = pickle.load( open( "./data/currentTrainTestData/2016-12-07T21:25:34.871445xTestFlattenSpec.p", "rb" ) )[:10]
+    test_labels = pickle.load( open( "./data/currentTrainTestData/2016-12-07T21:25:34.871445yTestSpec.p", "rb" ) )[:10]
+    # test_data = pickle.load( open( "./data/currentTrainTestData/xTestFlattenSpec.p", "rb" ) )[:10]
+    # test_labels = pickle.load( open( "./data/currentTrainTestData/yTestSpec.p", "rb" ) )[:10]
+    
+    print "test_data.shape: ", test_data.shape
+    print "train_labels.shape: ", test_labels.shape
+
+    test_data = numpy.transpose(test_data)
+
+    print "After transposing: test_data.shape ", test_data.shape
 
 
     """ Initialize the first Autoencoder with the above parameters """
@@ -510,16 +526,21 @@ def executeStackedAutoencoder():
     
     sae1_features = feedForwardAutoencoder(sae1_opt_theta, hidden_size1, visible_size, train_data)
 
-    print "######################################## finish the first AED ########################################"   
+    print "#### finish the first AED ####"   
 
     # store the recovered face from first layer autoencoder
     output = getOutput(sae1_opt_theta, hidden_size1, visible_size, train_data)
-    (num, d) = output.shape
-    output = output.reshape((d, num))
-    if not os.path.isfile("./data/output/firstAEDoutput" + str(datetime.datetime.now()) + ".p"):
-        print "########################################   save the recovered photo ########################################"
-        pickle.dump( output, open( "./data/output/firstAEDoutput" + str(datetime.datetime.now()) + ".p", "wb" ) )  
-     # 
+    output = numpy.transpose(output)
+    # if not os.path.isfile("./data/output/firstAEDTrainOutput" + now + ".p"):
+    pickle.dump( output, open( "./data/output/firstAEDTrainOutput" + now + ".p", "wb" ) )  
+
+    output = getOutput(sae1_opt_theta, hidden_size1, visible_size, test_data)
+    output = numpy.transpose(output)
+    print output.shape
+    # if not os.path.isfile("./data/output/firstAEDTestOutput" + now + ".p"):
+    pickle.dump( output, open( "./data/output/firstAEDTestOutput" + now + ".p", "wb" ) )  
+
+    print "####   save the recovered photo ####"
 
     """ Initialize the second Autoencoder with the above parameters """
     
@@ -536,7 +557,7 @@ def executeStackedAutoencoder():
     
     sae2_features = feedForwardAutoencoder(sae2_opt_theta, hidden_size2, hidden_size1, sae1_features)
 
-    print "######################################## finish the second AED ########################################"   
+    print "#### finish the second AED ####"   
     
 
     """ Initialize the third Autoencoder with the above parameters """
@@ -554,7 +575,7 @@ def executeStackedAutoencoder():
     
     sae3_features = feedForwardAutoencoder(sae3_opt_theta, hidden_size3, hidden_size2, sae2_features)
 
-    print "######################################## finish the third AED ########################################"   
+    print "#### finish the third AED ####"   
     
     """ Initialize Softmax Regressor with the above parameters """
     
@@ -588,20 +609,7 @@ def executeStackedAutoencoder():
     
     net_config = [visible_size, hidden_size1, hidden_size2, hidden_size3, num_classes]
     
-    """ Load test images and labels """
 
-
-    test_data = pickle.load( open( "./data/currentTrainTestData/2016-12-07T21:25:34.871445xTestFlattenSpec.p", "rb" ) )
-    test_labels = pickle.load( open( "./data/currentTrainTestData/2016-12-07T21:25:34.871445yTestSpec.p", "rb" ) )
-    # test_data = pickle.load( open( "./data/currentTrainTestData/xTestFlattenSpec.p", "rb" ) )[:10]
-    # test_labels = pickle.load( open( "./data/currentTrainTestData/yTestSpec.p", "rb" ) )[:10]
-    
-    print "test_data.shape: ", test_data.shape
-    print "train_labels.shape: ", test_labels.shape
-
-    test_data = numpy.transpose(test_data)
-
-    print "After transposing: test_data.shape ", test_data.shape
 ########################################################################################
     """ Get predictions after greedy training """
 
@@ -611,8 +619,8 @@ def executeStackedAutoencoder():
     unSupervisedTestPred = stackedAutoencoderPredict(stacked_ae_theta, net_config, test_data)
     unSupervisedTestPred = numpy.transpose(unSupervisedTestPred)
 
-    pickle.dump( unSupervisedTrainPred, open( "./data/output/unSupervisedTrainPred" + str(datetime.datetime.now()) + ".p", "wb" ) )    
-    pickle.dump( unSupervisedTestPred, open( "./data/output/unSupervisedTestPred" + str(datetime.datetime.now()) + ".p", "wb" ) )
+    pickle.dump( unSupervisedTrainPred, open( "./data/output/unSupervisedTrainPred" + now + ".p", "wb" ) )    
+    pickle.dump( unSupervisedTestPred, open( "./data/output/unSupervisedTestPred" + now + ".p", "wb" ) )
     
     """ Print accuracy of the trained model """
     unSupervisedTrainAccuracy = getError(train_labels, unSupervisedTrainPred)
@@ -638,8 +646,8 @@ def executeStackedAutoencoder():
     supervisedTestPred = stackedAutoencoderPredict(stacked_ae_opt_theta, net_config, test_data)
     supervisedTestPred = numpy.transpose(supervisedTestPred)
     
-    pickle.dump( supervisedTrainPred, open( "./data/output/supervisedTrainPred" + str(datetime.datetime.now()) + ".p", "wb" ) )    
-    pickle.dump( supervisedTestPred, open( "./data/output/supervisedTestPred" + str(datetime.datetime.now()) + ".p", "wb" ) )
+    pickle.dump( supervisedTrainPred, open( "./data/output/supervisedTrainPred" + now + ".p", "wb" ) )    
+    pickle.dump( supervisedTestPred, open( "./data/output/supervisedTestPred" + now + ".p", "wb" ) )
     
 
     """ Print accuracy of the trained model """
