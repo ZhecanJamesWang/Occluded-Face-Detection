@@ -15,9 +15,10 @@ class preProcess(object):
 
         self.padding = 50
         self.size = (50, 50)
-        self.debug = False
+        self.debug = True
         self.derivativeNum = 3
         self.firstSave = True
+        self.waitTime = 0
         self.dataDict = {
         "afw": {"type": ".jpg", "method": "files"}, 
         "helen": {"type": ".jpg", "method": "folders"}, 
@@ -56,7 +57,8 @@ class preProcess(object):
                     if file != ".DS_Store" and self.format in file:
                         imgs, landmarks = self.extract(path + "/", file)
                         # resizedImage, normalizedImage, pts = self.extract(self.rawDir + "/", file)
-                        self.saveImg(imgs, landmarks, file)
+                        if not self.debug:
+                            self.saveImg(imgs, landmarks, file)
                         counter += self.derivativeNum * 4 + 2
 
                         if counter - preCounter > 100:
@@ -77,8 +79,9 @@ class preProcess(object):
         for file in files:
             if file != ".DS_Store" and self.format in file:
                 # imgs, landmarks = self.extract(path + "/", file)
-                imgs, landmarks = self.extract(self.rawDir + "/", file)                
-                self.saveImg(imgs, landmarks, file)
+                imgs, landmarks = self.extract(self.rawDir + "/", file)   
+                if not self.debug:                 
+                    self.saveImg(imgs, landmarks, file)
                 counter += 1
 
                 if counter % 100 == 0:
@@ -97,7 +100,7 @@ class preProcess(object):
             if self.debug:
                 X, Y = ut.unpackLandmarks(landmark)
                 self.plotLandmarks(img, X, Y, "spec", ifRescale = True)
-                cv2.waitKey(1000)
+                cv2.waitKey(self.waitTime)
             else:
                 pickle.dump( img, open( self.preProcessedDir + fileName[:-4] + "Normalized" + str(index) + ".p", "wb" ) )
                 pickle.dump( landmark, open( self.preProcessedDir + fileName[:-4] + "Landmarks" + str(index) + ".p", "wb" ) )            
@@ -212,6 +215,8 @@ class preProcess(object):
         # return image and its landmarks location data
         ptsName = picName[:-4] + ".pts"
         img = cv2.imread(dataDir + picName,1)
+        if self.debug:
+            self.plotLandmarks(img, [], [], "original")
         (ymax, xmax, _) = img.shape
         X, Y = self.parseLandmark(dataDir, ptsName)
 
@@ -223,7 +228,7 @@ class preProcess(object):
         Ys.append(Y)
 
         if self.debug:
-            cv2.waitKey(1000)
+            cv2.waitKey(self.waitTime)
             # cv2.destroyAllWindows()
 
         filterImages = []
@@ -336,7 +341,7 @@ class preProcess(object):
                     if self.debug:
                         X, Y = ut.unpackLandmarks(landmark)
                         self.plotLandmarks(img, X, Y, "spec", ifRescale = True)
-                        cv2.waitKey(1000)                    
+                        cv2.waitKey(self.waitTime)                    
 
                     x.append(img)
                     y.append(landmark)
@@ -440,10 +445,10 @@ class preProcess(object):
 
 
     def run(self):
-        # self.getData()
+        self.getData()
         # self.collectData()
         # self.splitData()
-        self.combineData()
+        # self.combineData()
 
 
 
