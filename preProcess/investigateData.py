@@ -6,19 +6,19 @@ import utility as ut
 
 class InvestigateData(object):
     def __init__(self):
-        
+
         trainTestDir = "./data/trainTestData/"
+        outputDir = "/Users/zhecanwang/Project/Occluded-Face-Detection/StackedAutoencoder/data/output/"
+        # self.output = pickle.load( open( output + "firstAEDoutput2016-12-07 22:20:28.015704.p", "rb" ) )
 
-        self.output = pickle.load( open( trainTestDir + "firstAEDoutput2016-12-07 22:20:28.015704.p", "rb" ) )
-
-        self.xTest = pickle.load( open( trainTestDir + "2016-12-07T21:25:34.871445xTestFlattenSpec.p", "rb" ) )
-        # self.yTest = pickle.load( open( trainTestDir + "yTrainSpec.p", "rb" ) )
-        # self.suPred = pickle.load( open( trainTestDir + "supervisedTrainPredSpec400Epoch.p", "rb" ) )[:2000]
-        # self.unsPred = pickle.load( open( trainTestDir + "unSupervisedTrainPredSpec400Epoch.p", "rb" ) )[:2000] 
+        self.xTest = pickle.load( open( trainTestDir + "2016-12-07T21:25:34.871445xTrainFlattenSpec.p", "rb" ) )
+        self.yTest = pickle.load( open( trainTestDir + "2016-12-07T21:25:34.871445yTrainSpec.p", "rb" ) )
+        self.suPred = pickle.load( open( outputDir + "2/supervisedTrainPred2016-12-09 03:47:11.792156.p", "rb" ) )[:2000]
+        self.unsPred = pickle.load( open( outputDir + "2/unSupervisedTrainPred2016-12-09 03:26:38.769929.p", "rb" ) )[:2000] 
         print self.xTest.shape
-        # print self.yTest.shape
-        # print self.suPred.shape
-        # print self.unsPred.shape
+        print self.yTest.shape
+        print self.suPred.shape
+        print self.unsPred.shape
         # print self.output.shape
 
         # self.specPic = pickle.load( open( "296814969_2Normalized12.p", "rb" ) )
@@ -98,9 +98,9 @@ class InvestigateData(object):
 
                 cv2.destroyAllWindows()
     def check(self):
-        self.checkRecoveredImg()
+        # self.checkRecoveredImg()
         # self.checkSpecPic()
-        # self.checkLandmarks()
+        self.checkLandmarks()
 
 if __name__ == '__main__':
     InvestigateData().check()

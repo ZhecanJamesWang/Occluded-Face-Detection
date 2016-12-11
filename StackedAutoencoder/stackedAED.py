@@ -481,8 +481,8 @@ def executeStackedAutoencoder():
     """ Load data for training and testing """
     
 
-    train_data = pickle.load( open("./data/currentTrainTestData/2016-12-07T21:25:34.871445xTrainFlattenSpec.p", "rb" ) )[:10]
-    train_labels = pickle.load( open("./data/currentTrainTestData/2016-12-07T21:25:34.871445yTrainSpec.p", "rb" ) )[:10]
+    train_data = pickle.load( open("./data/currentTrainTestData/2016-12-07T21:25:34.871445xTrainFlattenSpec.p", "rb" ) )
+    train_labels = pickle.load( open("./data/currentTrainTestData/2016-12-07T21:25:34.871445yTrainSpec.p", "rb" ) )
 
     # train_data = pickle.load( open("./data/currentTrainTestData/xTrainFlattenSpec.p", "rb" ) )[:10]
     # train_labels = pickle.load( open("./data/currentTrainTestData/yTrainSpec.p", "rb" ) )[:10]
@@ -496,8 +496,8 @@ def executeStackedAutoencoder():
     """ Load test images and labels """
 
 
-    test_data = pickle.load( open( "./data/currentTrainTestData/2016-12-07T21:25:34.871445xTestFlattenSpec.p", "rb" ) )[:10]
-    test_labels = pickle.load( open( "./data/currentTrainTestData/2016-12-07T21:25:34.871445yTestSpec.p", "rb" ) )[:10]
+    test_data = pickle.load( open( "./data/currentTrainTestData/2016-12-07T21:25:34.871445xTestFlattenSpec.p", "rb" ) )
+    test_labels = pickle.load( open( "./data/currentTrainTestData/2016-12-07T21:25:34.871445yTestSpec.p", "rb" ) )
     # test_data = pickle.load( open( "./data/currentTrainTestData/xTestFlattenSpec.p", "rb" ) )[:10]
     # test_labels = pickle.load( open( "./data/currentTrainTestData/yTestSpec.p", "rb" ) )[:10]
     
